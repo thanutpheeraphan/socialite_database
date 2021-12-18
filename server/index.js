@@ -21,8 +21,13 @@ app.use("/dashboard", require("./routes/dashboard"));
 
 app.use("/rooms", require("./routes/rooms"));
 
+// app.get("*", (req,res)=>{
+// 	res.sendFile(path.join(__dirname,""))
+// })
 
 
 app.listen(5000,()=>{
 	console.log("server is running on port 5000");
 })
+
+
