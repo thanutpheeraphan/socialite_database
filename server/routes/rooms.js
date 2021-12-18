@@ -30,11 +30,11 @@ router.get("/getrooms", async (req, res) => {
   }
 });
 
-router.get("/noOfmembers",async(req,res) =>{
+router.get("/noOfmembers/:room_link",async(req,res) =>{
 
 	try {
-		let {password, room_link ,room_name} = req.body;
-		const roomsfromdb = pool.query( "SELECT * FROM rooms WHERE (room_link = $1 AND status = $2 AND room_name = $3)", [room_link,true,room_name]);
+		const {room_link} = req.params;
+		const roomsfromdb = pool.query( "SELECT * FROM rooms WHERE (room_link = $1 AND status = $2)", [room_link,true]);
 		res.status(200).json((await roomsfromdb).rows[0].room_member);
 		
 	} catch (err) {
@@ -45,18 +45,22 @@ router.get("/noOfmembers",async(req,res) =>{
 
 router.put("/userjoined", async (req,res)=>{
 	try {
-		let { user_id, room_name, password, room_link } =
+		const {room_name, room_link } =
 		req.body;
 
-		const roomsfromdb = pool.query( "SELECT * FROM rooms WHERE (room_link = $1 AND status = $2 AND room_name = $3)", [room_link,true,room_name]);
-		let noOfMembers=res.status(200).json((await roomsfromdb).rows[0].room_member);
+		console.log("room_link ", room_link);
+		const roomsfromdb = await pool.query( "SELECT * FROM rooms WHERE (room_link = $1 AND status = $2)", [room_link,true]);
+		console.log(roomsfromdb.rows)
+		let noOfMembers= roomsfromdb.rows[0].room_member;
+		
 
 
 		noOfMembers += 1;
-		pool.query(
-			'UPDATE rooms SET room_member = $1 WHERE (room_name= $2 AND user_id= $3)', [noOfMembers,room_name, user_id]);
+		const temp = pool.query(
+			'UPDATE rooms SET room_member = $1 WHERE (room_link= $2)', [noOfMembers,room_link]);
 
-		res.status(200).send(`Someone joined room: ${room_name}`)
+		res.status(200).json((roomsfromdb).rows[0]);
+		// res.status(200).json((await roomsfromdb).rows[0].room_member);
 	} catch (err) {
 		console.error(err.message);
 		res.status(500).send("Server Error");
