@@ -91,7 +91,7 @@ router.get("/searchroom",async(req,res)=>{
 	try {
 		const {name} = req.query;
 
-		const rooms = await pool.query("SELECT * FROM rooms WHERE room_name ILIKE $1",[`%${name}%`]);
+		const rooms = await pool.query("SELECT * FROM rooms WHERE room_name ILIKE $1 ORDER BY room_name ASC",[`%${name}%`]);
 
 		res.json(rooms.rows);
 		
