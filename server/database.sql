@@ -2,28 +2,20 @@ CREATE DATABASE socialite_db;
 
 --set extention
 CREATE TABLE users(
-	user_id uuid PRIMARY KEY DEFAULT,
-	uuid_generate_v4(),
+	user_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
 	user_name VARCHAR(255) NOT NULL,
 	user_email VARCHAR(255) NOT NULL,
 	user_password VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE users(
-	user_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-	user_email VARCHAR(255) NOT NULL,
-	user_password VARCHAR(255) NOT NULL
-);
-
 CREATE TABLE rooms(
-	room_id VARCHAR(255) PRIMARY KEY NOT NULL,
-	room_name VARCHAR(255),
-	room_link  VARCHAR(255),
+	user_id uuid DEFAULT uuid_generate_v4(),
+	room_name VARCHAR(255) PRIMARY KEY NOT NULL,
+	room_link  INTEGER NOT NULL,
 	room_member INTEGER NOT NULL,
-	tags,
-	user_id,
-	password, 
-	status,
+	tags VARCHAR(255)[],
+	password VARCHAR(255), 
+	status BOOLEAN
 );
 
 
