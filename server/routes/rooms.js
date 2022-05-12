@@ -21,6 +21,7 @@ router.post("/createroom", async (req, res) => {
 });
 
 router.get("/getrooms", async (req, res) => {
+	
   try {
     const roomsfromdb = pool.query( "SELECT * FROM rooms ORDER BY room_name ASC");
 	res.status(200).json((await roomsfromdb).rows);
@@ -85,6 +86,22 @@ router.delete("/close/:room_link",async(req,res)=>{
 		res.status(500).send("Server Error");
 	}
 })
+
+router.get("/searchroom",async(req,res)=>{
+	try {
+		const {name} = req.query;
+
+		const rooms = await pool.query("SELECT * FROM rooms WHERE room_name ILIKE $1",[`%${name}%`]);
+
+		res.json(rooms.rows);
+		
+	} catch (err) {
+		console.error(err.message);
+		
+	}
+})
+
+
 
 
 
