@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require("express");
 const app = express()
 const cors = require("cors");
@@ -9,7 +10,7 @@ app.use(cors())
 
 //ROUTES
 
-//register and login route
+//register and login route {user}
 
 app.use("/auth",require("./routes/jwAuth"));
 

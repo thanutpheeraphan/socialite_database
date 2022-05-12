@@ -12,6 +12,7 @@ router.post("/createroom", async (req, res) => {
       [user_id, room_name, password, room_link, status, room_member]
     );
 
+	console.log("Room created");
     return res.status(200).json(newRoom.rows[0]);
   } catch (err) {
     console.error(err.message);
@@ -45,7 +46,7 @@ router.get("/noOfmembers/:room_link",async(req,res) =>{
 
 router.put("/userjoined", async (req,res)=>{
 	try {
-		const {room_name, room_link } =
+		const {room_name, room_link , user_state} =
 		req.body;
 
 		console.log("room_link ", room_link);
@@ -84,6 +85,8 @@ router.delete("/close/:room_link",async(req,res)=>{
 		res.status(500).send("Server Error");
 	}
 })
+
+
 
 
 module.exports = router;
