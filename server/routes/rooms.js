@@ -63,9 +63,8 @@ router.post("/createroom", async (req, res) => {
       newTagList += "('" + newRoom + "','" + newTags.rows[j].tag_name + "'),";
     }
     newTagList = newTagList.slice(0, -1);
-    console.log("What the hell: ", newTagList);
-    // console.log(testList);
-    console.log(checkList);
+    // console.log("What the hell: ", newTagList);
+    // console.log(checkList);
 
     let roomTag = await pool.query(
       // `WITH e AS(
@@ -203,41 +202,49 @@ router.get("/searchroom", async (req, res) => {
     // console.log(newRoom);
     // console.log(tags.rows);
 
-    var combineRoomAndTags = [...new Set([...newRoom, ...newTag])];
-	var finalGroup = "(";
-	combineRoomAndTags.forEach((item)=>{
-		finalGroup += "'" + item + "',";
-		// console.log(item);
-
-	})
-	finalGroup = finalGroup.slice(0, -1);
-	finalGroup = finalGroup += ")";
-
-
-    const getrooms = await pool.query(
-    //   `SELECT * FROM rooms WHERE room_link in ${combineRoomAndTags};`, 
-	`SELECT * FROM rooms WHERE room_link in ${finalGroup};`
-
-	//   `SELECT * FROM rooms WHERE room_link in ('9940fbe1-092e-414c-b000-af4e77dbcb82','9940fbe1-092e-414c-b000-af4e77dbcb86');`
-    );
-
-	const roomInfo = getrooms.rows;
-    for (let j = 0; j < getrooms.rowCount; j++) {
-      roomInfo[j].tags = [];
-      const rooms = await pool.query(
-        "SELECT tag_name FROM room_tags WHERE (room_link = $1);",
-        [roomInfo[j].room_link]
-      );
-
-      rooms.rows.forEach((item) => {
-        roomInfo[j].tags.push(item["tag_name"]);
+    let combineRoomAndTags = [...new Set([...newRoom, ...newTag])];
+    let finalGroup = "";
+    // console.log(combineRoomAndTags.length);
+    if (combineRoomAndTags.length == 0) {
+    //   console.log("if");
+      return res.json([]);
+    } else {
+    //   console.log("else");
+      finalGroup = "(";
+      combineRoomAndTags.forEach((item) => {
+        finalGroup += "'" + item + "',";
+        // console.log(item);
       });
-    }
-	console.log(roomInfo);
+      finalGroup = finalGroup.slice(0, -1);
+      finalGroup = finalGroup += ")";
+      const getrooms = await pool.query(
+        //   `SELECT * FROM rooms WHERE room_link in ${combineRoomAndTags};`,
+        `SELECT * FROM rooms WHERE room_link in ${finalGroup};`
 
-    res.json(roomInfo);
+        //   `SELECT * FROM rooms WHERE room_link in ('9940fbe1-092e-414c-b000-af4e77dbcb82','9940fbe1-092e-414c-b000-af4e77dbcb86');`
+      );
+	 
+      const roomInfo = getrooms.rows;
+	  console.log(roomInfo);
+      for (let j = 0; j < getrooms.rowCount; j++) {
+        roomInfo[j].tags = [];
+        const rooms = await pool.query(
+          "SELECT tag_name FROM room_tags WHERE (room_link = $1);",
+          [roomInfo[j].room_link]
+        );
+
+        rooms.rows.forEach((item) => {
+          roomInfo[j].tags.push(item["tag_name"]);
+        });
+      }
+	  res.json(roomInfo);
+    }
+
+    // console.log(roomInfo);
+   
   } catch (err) {
     console.error(err.message);
+    res.status(500).send(err.message);
   }
 });
 
