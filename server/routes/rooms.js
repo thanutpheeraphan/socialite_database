@@ -11,75 +11,114 @@ router.post("/createroom", async (req, res) => {
       room_link,
       status,
       room_member,
-      tags, //tags={fun,games}
+      tags,
     } = req.body;
+    let newTags;
+    let finalList;
+    console.log(tags);
+    if (room_name == null || room_name === "") {
+      return res.status(400).send("Invalid room name!");
+    } else {
+		const checkRoomName = await pool.query(
+			'SELECT COUNT(*) from rooms where (room_name = $1);',[room_name]
+		);
+		
+		if(checkRoomName.rows[0]["count"] == 1){
+			return res.status(400).send("Room already exists!");
+		}
 
-    let checkList = "(";
-    for (var i = 0; i < tags.length; i++) {
-      checkList += "'" + tags[i] + "',";
+
+
+      if (tags.length > 0) {
+        let checkList = "(";
+        for (var i = 0; i < tags.length; i++) {
+          checkList += "'" + tags[i] + "',";
+        }
+        checkList = checkList.slice(0, -1);
+        checkList += ")";
+        let testList = "";
+        for (var i = 0; i < tags.length; i++) {
+          testList += "('" + tags[i] + "'),";
+        }
+        testList = testList.slice(0, -1);
+        newTags = await pool.query(
+          // `INSERT INTO tags (tag_name) VALUES ${testList} ON CONFLICT DO NOTHING`
+          `WITH e AS(
+				  INSERT INTO tags (tag_name) 
+						 VALUES  ${testList}
+				  ON CONFLICT(tag_name) DO NOTHING
+				  RETURNING tag_name
+			  )
+			  SELECT * FROM e
+			  UNION
+			  select tag_name from tags where tag_name in ${checkList};`
+        );
+        let newRoom = await pool.query(
+          // `WITH e AS(
+          // 	INSERT INTO rooms (user_id,room_name,password,room_link,status,room_member)
+          // 		   VALUES ($1, $2 ,$3,$4,$5,$6)
+          // 	ON CONFLICT(room_name) DO NOTHING
+          // 	RETURNING room_link
+          // )
+          // SELECT * FROM e
+          // UNION
+          // select room_link from rooms where (room_link = $4);`,[user_id, room_name, password, room_link, status, room_member]
+
+          "INSERT INTO rooms (user_id,room_name,password,room_link,status,room_member) VALUES ($1, $2 ,$3,$4,$5,$6) RETURNING room_link",
+          [user_id, room_name, password, room_link, status, room_member]
+        );
+
+        let newTagList = "";
+        // let newRoom = "9940fbe1-092e-414c-b000-af4e77dbcb88";
+        newRoom = newRoom.rows[0].room_link;
+        for (let j = 0; j < newTags.rowCount; j++) {
+          newTagList +=
+            "('" + newRoom + "','" + newTags.rows[j].tag_name + "'),";
+        }
+        newTagList = newTagList.slice(0, -1);
+        // console.log("What the hell: ", newTagList);
+        // console.log(checkList);
+
+        let roomTag = await pool.query(
+          // `WITH e AS(
+          // 	INSERT INTO room_tags (room_link , tag_name)
+          // 		   VALUES  ${newTagList}
+          // 	ON CONFLICT(room_link) DO NOTHING
+          // 	RETURNING room_tags_id
+          // )
+          // SELECT * FROM e
+          // UNION
+          // select room_tags_id from room_tags where (room_link = $1 and tag_name in ${checkList});`,[newRoom]
+          `INSERT INTO room_tags (room_link , tag_name) VALUES ${newTagList} ON CONFLICT DO NOTHING RETURNING *`
+        );
+
+        finalList = roomTag.rows;
+      } else {
+        let newRoom = await pool.query(
+          // `WITH e AS(
+          // 	INSERT INTO rooms (user_id,room_name,password,room_link,status,room_member)
+          // 		   VALUES ($1, $2 ,$3,$4,$5,$6)
+          // 	ON CONFLICT(room_name) DO NOTHING
+          // 	RETURNING room_link
+          // )
+          // SELECT * FROM e
+          // UNION
+          // select room_link from rooms where (room_link = $4);`,[user_id, room_name, password, room_link, status, room_member]
+
+          "INSERT INTO rooms (user_id,room_name,password,room_link,status,room_member) VALUES ($1, $2 ,$3,$4,$5,$6) RETURNING *",
+          [user_id, room_name, password, room_link, status, room_member]
+        );
+        finalList = newRoom.rows;
+      }
     }
-    checkList = checkList.slice(0, -1);
-    checkList += ")";
-    let testList = "";
-    for (var i = 0; i < tags.length; i++) {
-      testList += "('" + tags[i] + "'),";
-    }
-    testList = testList.slice(0, -1);
     // console.log(testList);
     // console.log(checkList)
+    // console.log(typeof(room_link));
 
-    let newRoom = await pool.query(
-      // `WITH e AS(
-      // 	INSERT INTO rooms (user_id,room_name,password,room_link,status,room_member)
-      // 		   VALUES ($1, $2 ,$3,$4,$5,$6)
-      // 	ON CONFLICT(room_name) DO NOTHING
-      // 	RETURNING room_link
-      // )
-      // SELECT * FROM e
-      // UNION
-      // select room_link from rooms where (room_link = $4);`,[user_id, room_name, password, room_link, status, room_member]
+    // console.log(newRoom.rows);
 
-      "INSERT INTO rooms (user_id,room_name,password,room_link,status,room_member) VALUES ($1, $2 ,$3,$4,$5,$6) RETURNING room_link",
-      [user_id, room_name, password, room_link, status, room_member]
-    );
-
-    let newTags = await pool.query(
-      // `INSERT INTO tags (tag_name) VALUES ${testList} ON CONFLICT DO NOTHING`
-      `WITH e AS(
-			INSERT INTO tags (tag_name) 
-				   VALUES  ${testList}
-			ON CONFLICT(tag_name) DO NOTHING
-			RETURNING tag_name
-		)
-		SELECT * FROM e
-		UNION
-		select tag_name from tags where tag_name in ${checkList};`
-    );
-
-    let newTagList = "";
-    // let newRoom = "9940fbe1-092e-414c-b000-af4e77dbcb88";
-    newRoom = newRoom.rows[0].room_link;
-    for (let j = 0; j < newTags.rowCount; j++) {
-      newTagList += "('" + newRoom + "','" + newTags.rows[j].tag_name + "'),";
-    }
-    newTagList = newTagList.slice(0, -1);
-    // console.log("What the hell: ", newTagList);
-    // console.log(checkList);
-
-    let roomTag = await pool.query(
-      // `WITH e AS(
-      // 	INSERT INTO room_tags (room_link , tag_name)
-      // 		   VALUES  ${newTagList}
-      // 	ON CONFLICT(room_link) DO NOTHING
-      // 	RETURNING room_tags_id
-      // )
-      // SELECT * FROM e
-      // UNION
-      // select room_tags_id from room_tags where (room_link = $1 and tag_name in ${checkList});`,[newRoom]
-      `INSERT INTO room_tags (room_link , tag_name) VALUES ${newTagList} ON CONFLICT DO NOTHING RETURNING *`
-    );
-
-    return res.status(200).json(roomTag.rows);
+    // return res.status(200).json(roomTag.rows);
+    return res.status(200).json(finalList);
   } catch (err) {
     console.error(err.message);
     res.send(err);
@@ -206,10 +245,10 @@ router.get("/searchroom", async (req, res) => {
     let finalGroup = "";
     // console.log(combineRoomAndTags.length);
     if (combineRoomAndTags.length == 0) {
-    //   console.log("if");
+      //   console.log("if");
       return res.json([]);
     } else {
-    //   console.log("else");
+      //   console.log("else");
       finalGroup = "(";
       combineRoomAndTags.forEach((item) => {
         finalGroup += "'" + item + "',";
@@ -223,9 +262,9 @@ router.get("/searchroom", async (req, res) => {
 
         //   `SELECT * FROM rooms WHERE room_link in ('9940fbe1-092e-414c-b000-af4e77dbcb82','9940fbe1-092e-414c-b000-af4e77dbcb86');`
       );
-	 
+
       const roomInfo = getrooms.rows;
-	  console.log(roomInfo);
+      console.log(roomInfo);
       for (let j = 0; j < getrooms.rowCount; j++) {
         roomInfo[j].tags = [];
         const rooms = await pool.query(
@@ -237,11 +276,10 @@ router.get("/searchroom", async (req, res) => {
           roomInfo[j].tags.push(item["tag_name"]);
         });
       }
-	  res.json(roomInfo);
+      res.json(roomInfo);
     }
 
     // console.log(roomInfo);
-   
   } catch (err) {
     console.error(err.message);
     res.status(500).send(err.message);
