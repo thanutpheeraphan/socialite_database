@@ -258,7 +258,7 @@ router.get("/searchroom", async (req, res) => {
       finalGroup = finalGroup += ")";
       const getrooms = await pool.query(
         //   `SELECT * FROM rooms WHERE room_link in ${combineRoomAndTags};`,
-        `SELECT * FROM rooms WHERE room_link in ${finalGroup};`
+        `SELECT * FROM rooms WHERE room_link in ${finalGroup} ORDER BY room_name ASC;`
 
         //   `SELECT * FROM rooms WHERE room_link in ('9940fbe1-092e-414c-b000-af4e77dbcb82','9940fbe1-092e-414c-b000-af4e77dbcb86');`
       );
