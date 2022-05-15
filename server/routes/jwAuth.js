@@ -15,14 +15,24 @@ router.post("/register", validInfo, async(req,res)=>{
 
 		const {name,email,password} = req.body;
 
-		//2. check if user exist (if user exist then throw error)
+		//2. check if user exist by email (if user exist then throw error)
 
 		const user = await pool.query("SELECT * FROM users WHERE user_email = $1", [email]);
 
+		//2.5 check if user_name duplicates exist (if user_name exist then throw error)
+
+		const user_name = await pool.query("SELECT * FROM users WHERE user_name = $1", [name]);
+
 		// res.json(user.rows)
 
+		// console.log(user_name.rows.length);
+
 		if(user.rows.length !== 0){
-			return res.status(401).json("User already exist!")
+			return res.status(401).json("Email is already in use!")
+		}
+
+		if(user_name.rows.length !== 0){
+			return res.status(401).json("User already exist! Try a new user name")
 		}
 		//3. bcrypt the user password
 
