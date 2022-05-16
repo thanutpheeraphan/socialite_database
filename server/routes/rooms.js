@@ -22,7 +22,7 @@ router.post("/createroom", async (req, res) => {
 		const checkRoomName = await pool.query(
 			'SELECT COUNT(*) from rooms where (room_name = $1);',[room_name]
 		);
-		
+
 		if(checkRoomName.rows[0]["count"] == 1){
 			return res.status(400).send("Room already exists!");
 		}
@@ -167,17 +167,37 @@ router.get("/noOfmembers/:room_link", async (req, res) => {
 
 router.put("/userjoined", async (req, res) => {
   try {
-    const { room_name, room_link, user_state } = req.body;
+    const {room_link,action } = req.body;
 
-    console.log("room_link ", room_link);
+	// console.log("room_link ", room_link);
+	
     const roomsfromdb = await pool.query(
       "SELECT * FROM rooms WHERE (room_link = $1 AND status = $2)",
       [room_link, true]
     );
     console.log(roomsfromdb.rows);
     let noOfMembers = roomsfromdb.rows[0].room_member;
+	typeof(noOfMembers);
+	// if(noOfMembers == 1){
 
-    noOfMembers += 1;
+	// }
+	if(action == "join"){
+		noOfMembers += 1;
+	}
+	else{
+		noOfMembers -= 1;
+		// res.redirect('/user');
+	}
+
+    // console.log("room_link ", room_link);
+    // const roomsfromdb = await pool.query(
+    //   "SELECT * FROM rooms WHERE (room_link = $1 AND status = $2)",
+    //   [room_link, true]
+    // );
+    // console.log(roomsfromdb.rows);
+    // let noOfMembers = roomsfromdb.rows[0].room_member;
+    // noOfMembers += 1;
+
     const temp = pool.query(
       "UPDATE rooms SET room_member = $1 WHERE (room_link= $2)",
       [noOfMembers, room_link]
