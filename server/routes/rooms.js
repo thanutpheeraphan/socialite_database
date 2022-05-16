@@ -178,9 +178,29 @@ router.put("/userjoined", async (req, res) => {
     console.log(roomsfromdb.rows);
     let noOfMembers = roomsfromdb.rows[0].room_member;
 	typeof(noOfMembers);
-	// if(noOfMembers == 1){
+	if(noOfMembers == 1 && action == "leave"){
+		try {
+			const deleteRoom = await pool.query(
+				"DELETE FROM rooms WHERE (room_link = $1)",
+				[room_link]
+			);
+			if(deleteRoom.status == 200){
+				console.log(200);
+			}
+			else{
+				console.log(deleteRoom);
 
-	// }
+			}
+			return res.json("Testing")
+			// res.json("Room was deleted");
+			
+		} catch (err) {
+			console.err(err.message);
+		}
+		
+
+
+	}
 	if(action == "join"){
 		noOfMembers += 1;
 	}
