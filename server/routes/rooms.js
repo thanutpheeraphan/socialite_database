@@ -326,4 +326,44 @@ router.get("/searchroom", async (req, res) => {
   }
 });
 
+router.post("/checkpassroom" , async (req,res)=>{
+	try{
+		
+		//1. destructure the req.body
+
+		const {room_link,password} = req.body;
+
+		//2. check if user doesnt exist (if not we throw error)
+
+		const room = await pool.query("SELECT * FROM rooms WHERE room_link = $1",[room_link]);
+
+		if(room.rows.length == 0){
+			return res.status(401).json("Password is incorrect!"); //room doesnt exist
+		}
+
+		//3. check if incoming password is the same as the database password
+
+		// const validPassword = await bcrypt.compare(password, user.rows[0].user_password);
+		const roomPassword = room.rows[0].password;
+		console.log(password)
+		console.log(roomPassword)
+		const validPassword = (roomPassword== password);
+
+		if (!validPassword){
+			return res.status(401).json("Invalid Credentials");
+		}
+		//4. give them jwt token
+
+		// const jwtToken = jwtGenerator(user.rows[0].user_id);
+		// const userName = user.rows[0].user_name;
+		// const userId = user.rows[0].user_id;
+		// return res.json({ jwtToken , userName, userId});
+		return res.json("Password passed");
+		
+	}catch(err){
+		console.error(err.message);
+		res.status(500).send("Server Error");
+	}
+})
+
 module.exports = router;
